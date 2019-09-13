@@ -81,7 +81,7 @@ app.put('/usuarios/:id', (req, res) => {
     let body = _.pick(req.body, ['nombre', 'email', 'img', 'role', 'password'])
 
 
-    Usuario.findByIdAndUpdate(id, body, { new: true }, (err, userDB) => {
+    Usuario.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, userDB) => {
 
         if (err) {
             return res.status(400).json({
