@@ -3,8 +3,10 @@ const app = express();
 const Usuario = require('../models/usuario');
 const _ = require('underscore');
 const bcrypt = require('bcrypt');
+const { verificarToken } = require('../middlewares/autenticacion');
+const jwt = require('jsonwebtoken');
 
-app.get('/usuarios', (req, res) => {
+app.get('/usuarios', verificarToken, (req, res) => {
 
     let desde = req.query.desde || 0;
     desde = Number(desde);
@@ -66,22 +68,27 @@ app.post('/usuarios', (req, res) => {
             })
         };
 
+        let token = jwt.sign({
+            usuario: userDB
+        }, 'Esta-es-mi-semilla-de-desarrollo', { expiresIn: 60 * 60 * 24 });
+
         res.json({
             ok: true,
-            usuario: userDB
-        });
+            usuario: userDB,
+            token
+        })
 
     });
 
 });
 
-app.put('/usuarios/:id', (req, res) => {
+app.put('/usuarios/:id', verificarToken, (req, res) => {
 
     let id = req.params.id;
     let body = _.pick(req.body, ['nombre', 'email', 'img', 'role', 'password'])
 
 
-    Usuario.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, userDB) => {
+    Usuario.findByIdAndUpdate(id, body, { new: true }, (err, userDB) => {
 
         if (err) {
             return res.status(400).json({
@@ -99,7 +106,7 @@ app.put('/usuarios/:id', (req, res) => {
 
 });
 
-app.delete('/usuarios/:id', (req, res) => {
+app.delete('/usuarios/:id', verificarToken, (req, res) => {
 
     let id = req.params.id;
     let desactivar = {
